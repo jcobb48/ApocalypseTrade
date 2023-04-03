@@ -24,6 +24,17 @@ local function isSinglePlayer()
     return not isClient() and not isServer()
 end
 
+local function getPlayerByName(_name)
+    local _players = getOnlinePlayers()
+    print("Connected players > ", _players)
+    for i, player in ipairs(_players) do
+        local _u = player:getUsername()
+        if _u == _name then
+            return player
+        end
+    end
+end
+
 function SendPayment(to, amount)
     local _player
     local _args
@@ -33,8 +44,6 @@ function SendPayment(to, amount)
         _args = { _player:getUsername(), to, amount }
     else
         print("MP SERVER -- SEND PAYMENT")
-        _recieverPlayer = getPlayerFromUsername(to)
-        print(to, " ", _recieverPlayer)
         _player = getPlayer()
         local _steamID = _player:getSteamID()
         _args = { _steamID, to, amount }
@@ -44,17 +53,31 @@ function SendPayment(to, amount)
 end
 
 
-function RequestBalance()
-    print("sending balance request client command...")
-    sendClientCommand("ApocalypseTrade", "balance", {})
+function RequestClientTradeData()
+    sendClientCommand("ApocalypseTrade", "trade_data_request", {})
 end
 
 Events.OnCreatePlayer.Add(RequestBalance)
 --Events.EveryOneMinute.Add(RequestBalance)
 
+
 function PaymentPressed()
-    local _username = getPlayer():getUsername()
-    SendPayment(_username, 1000)
+    local selectedPlayer = UI["playerSelector"]:getValue()
+    print("player > ", selectedPlayer)
+    local _thisUser = getPlayer():getUsername()
+    local _onlineID
+    if isSinglePlayer() then
+        _onlineID = _thisUser
+    else
+        if _thisUser == selectedPlayer then
+            _onlineID = getPlayer():getOnlineID()
+        else
+            local player = getPlayerByName(selectedPlayer)
+            print("player object > ", player)
+            _onlineID = player:getOnlineID()
+        end
+    end
+    SendPayment(_onlineID, 1000)
 end
 
 
@@ -63,15 +86,37 @@ function OnServerCommandApocalypseTradeClient(module, command, arguments)
     if module ~= "ACOIN_Balance_Update" then
         return
     end
-    print("coin data > ", tostring(arguments[1]))
     clientACoins = arguments[1]
     UI["coinCount"]:setText(tostring(clientACoins))
-    print("new text >", tostring(clientACoins))
-
 end
 
 Events.OnServerCommand.Add(OnServerCommandApocalypseTradeClient)
 
+local function updateUserList()
+    if isSinglePlayer() then
+        local name = getPlayer():getUsername()
+        UI["playerSelector"]:setItems({ name })
+    else
+        print("adding users")
+
+        local _playerUsername = getPlayer():getUsername()
+        local _playerNames = { _playerUsername }
+        local _players = getConnectedPlayers()
+        print(_players)
+        if _players ~= nil then
+            local count = 0
+            for _ in ipairs(_players) do count = count + 1 end
+            print("count: ", count)
+            for i, _player in ipairs(_players) do
+                local _pusername = _player:getUsername()
+                print("user added ", _pusername)
+                _playerNames.insert(i+1, _pusername)
+            end
+        end
+
+        UI["playerSelector"]:setItems(_playerNames)
+    end
+end
 
 function CreateUI()
     UI = NewUI();
@@ -87,25 +132,18 @@ function CreateUI()
     UI:addText("coinCount", tostring(clientACoins), _, "Center");
     UI:nextLine();
 
-    local _players = getOnlinePlayers()
-    if _player ~= nil then
-        UI:addText("", "Select a Player: ", _, "Center")
-        local _playerNames = {}
-        for i, _player in ipairs(_players) do
-            _playerNames[i] = _player:getUsername()
-        end
-        UI:addComboBox("playerSelector", _playerNames)
-    end
-    
-    
+    UI:addComboBox("playerSelector", {})
+    updateUserList()
+
+
     UI:nextLine();
     UI:addButton("payButton", "Test Payment", PaymentPressed)
-    UI:nextLine();
+    UI:nextLine()
 
-    UI:setBorderToAllElements(true);
+    UI:setBorderToAllElements(true)
 
 
-    UI:saveLayout();
+    UI:saveLayout()
     UI:close()
 
 
@@ -147,23 +185,24 @@ function createUI2()
     UI:addEntry("e1", "");
     UI:nextLine();
 
-    UI:addText("", "Combo:", _, "Center");
-    UI:addComboBox("c1", items1);
-    UI:nextLine();
+    UI:addText("", "Combo:", _, "Center")
+    UI:addComboBox("c1", items1)
+    UI:nextLine()
 
-    UI:addText("", "ScrollList:", _, "Center");
-    UI:addScrollList("s1", items2);
+    UI:addText("", "ScrollList:", _, "Center")
+    UI:addScrollList("s1", items2)
 
-    UI:setBorderToAllElements(true);                        -- Add border 
+    UI:setBorderToAllElements(true)
 
 
-    UI:saveLayout();
+    UI:saveLayout()
 end
 
 function OpenUIMenu(key)
     print("key ", key)
     if key ~= 24 then return end
     print("O pressed")
+    updateUserList()
     UI:open()
 end
 

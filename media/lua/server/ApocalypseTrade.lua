@@ -91,8 +91,9 @@ else
 end
 
 
-local function sendACoinBalanceUpdate(id)
+local function sendClientTradeData(id)
     local playerCoin = ApocalypseCoinTable[id]
+    local players = getOnlinePlayers()
     if isSinglePlayer() then
         triggerEvent("OnServerCommand", "ACOIN_Balance_Update", "true", {playerCoin, })
         -- check is singleplayer
@@ -116,46 +117,54 @@ function OnClientCommandApocalypseShop(module, command, player, args)
 
     if command == "pay" then
         print("ApocalypseShop pay player > ",tostring(player))
-        print("ApocalypseShop pay from > ",tostring(args[1]))
-        print("ApocalypseShop pay to > ",tostring(args[2]))
-        print("ApocalypseShop pay amount > ",tostring(args[3]))
-        local totalAmount = args[3]
-        print("ApocalypseShop user total now > ",tostring(totalAmount))
+
         if isSinglePlayer() then
-            local currentAmount = ApocalypseCoinTable[args[2]]
-            if currentAmount ~= nil then
-                totalAmount = totalAmount + currentAmount
-            end
-            ApocalypseCoinTable[args[2]] = totalAmount
-            sendACoinBalanceUpdate(args[1])
-            sendACoinBalanceUpdate(args[2])
+            print("ApocalypseShop pay from SteamID > ", tostring(args[1]))
+            print("ApocalypseShop pay to > ",tostring(args[2]))
         else
-            local _senderId = player:getSteamID()
-            local _recieverPlayer = getPlayerFromUsername(args[2])
-            local _recieverId = _recieverPlayer:getSteamID()
-            print("MP sender ID  >> ", _senderId)
-            print("MP reciever ID  >> ", _recieverId)
-            local currentAmount = ApocalypseCoinTable[_recieverId]
-            if currentAmount ~= nil then
-                totalAmount = totalAmount + currentAmount
-            end
-            ApocalypseCoinTable[_recieverId] = totalAmount
-            sendACoinBalanceUpdate(_senderId)
-            sendACoinBalanceUpdate(_recieverId)
+            print("ApocalypseShop pay from SteamID > ", string.format("%.0f", args[1]))
+            print("ApocalypseShop pay to > ", string.format("%.0f", args[2]))
         end
-        mod_data = ApocalypseCoinTable
-        local data = mod_data[args[2]]
-        print("MOD DATA > ", tostring(mod_data))
+        print("ApocalypseShop pay amount > ",tostring(args[3]))
+
+        local _senderId
+        local _recieverId
+        if isSinglePlayer() then
+            _senderId = args[1]
+            _recieverId = args[2]
+        else
+            _senderId = player:getSteamID()
+            _senderId = string.format("%.0f", _senderId)
+            local _recieverPlayer = getPlayerByOnlineID(args[2])
+            _recieverId = _recieverPlayer:getSteamID()
+            _recieverId = string.format("%.0f", _recieverId)
+        end
+
+        local totalAmount = args[3]
+        local currentAmount = ApocalypseCoinTable[_recieverId]
+        if currentAmount ~= nil then
+            totalAmount = totalAmount + currentAmount
+        end
+
+        print("ApocalypseShop user total now > ",tostring(totalAmount))
+        print("sender ", _senderId, " reciever ", _recieverId)
+        ApocalypseCoinTable[_recieverId] = totalAmount
+
+        sendClientTradeData(_recieverId)
+        if _senderId ~= _recieverId then
+            sendClientTradeData(_senderId)
+        end
+
+        print("MOD DATA > ", tostring(ApocalypseCoinTable))
         SaveCoinTableFile(ApocalypseCoinTable)
     end
 
-    if command == "balance" then
+    if command == "trade_data_request" then
         if isSinglePlayer() then
             local _username = player:getUsername()
-            sendACoinBalanceUpdate(_username)
+            sendClientTradeData(_username)
         else
-            local _username = player:getUsername()
-            sendACoinBalanceUpdate(player.steamID)
+            sendClientTradeData(player.steamID)
         end
     end
 end
