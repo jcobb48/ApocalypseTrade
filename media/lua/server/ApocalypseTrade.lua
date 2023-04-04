@@ -20,14 +20,31 @@ if isClient() then
     return
 end
 
-local pairs = pairs
-
 local coinTableFilename = "ApocalypseCoinTable.txt"
 
 local ApocalypseCoinTable = {}
 
 local function isSinglePlayer()
     return not isClient() and not isServer()
+end
+
+
+local function getPlayerBySteamID(_id)
+    local _players = getOnlinePlayers()
+    print("Connected players > ", _players)
+    print(type(_players))
+    print(_players:size())
+    print(_players:get(0))
+    for p=0, _players:size(), 1 do
+        local player = _players:get(p)
+        print("player > ", p, player)
+        local _sid = player:getSteamID()
+        local _sidString = string.format("%.0f", _sid)
+        print("sids > ", _sid, _sidString)
+        if _sidString == _id then
+            return player
+        end
+    end
 end
 
 local function encodeTable(t)
@@ -93,12 +110,14 @@ end
 
 local function sendClientTradeData(id)
     local playerCoin = ApocalypseCoinTable[id]
-    local players = getOnlinePlayers()
     if isSinglePlayer() then
         triggerEvent("OnServerCommand", "ACOIN_Balance_Update", "true", {playerCoin, })
         -- check is singleplayer
     else
+        local player = getPlayerBySteamID(id)
+        print("send trade data to ", id, " ", tostring(playerCoin))
         sendServerCommand(player, "ACOIN_Balance_Update", "true", {playerCoin,})
+        print("SENT TO player > ", player)
     end
 end
 
@@ -164,7 +183,10 @@ function OnClientCommandApocalypseShop(module, command, player, args)
             local _username = player:getUsername()
             sendClientTradeData(_username)
         else
-            sendClientTradeData(player.steamID)
+            pSID = player:getSteamID()
+            pSID = string.format("%.0f", pSID)
+            print("SENDING PLAYER TRADE DATA!!")
+            sendClientTradeData(pSID)
         end
     end
 end

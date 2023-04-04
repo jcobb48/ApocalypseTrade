@@ -57,9 +57,7 @@ function RequestClientTradeData()
     sendClientCommand("ApocalypseTrade", "trade_data_request", {})
 end
 
-Events.OnCreatePlayer.Add(RequestBalance)
---Events.EveryOneMinute.Add(RequestBalance)
-
+Events.EveryOneMinute.Add(RequestClientTradeData)
 
 function PaymentPressed()
     local selectedPlayer = UI["playerSelector"]:getValue()
@@ -155,7 +153,7 @@ function createUI2()
     UI = NewUI();
     UI:setTitle("All elements UI test")
     UI:setColumnWidthPixel(1, 100);
-    
+
     UI:addText("", "Apocalypse Shop", "Title", "Center");
     UI:setLineHeightPixel(100);
     UI:nextLine();
@@ -202,6 +200,7 @@ function OpenUIMenu(key)
     print("key ", key)
     if key ~= 24 then return end
     print("O pressed")
+    RequestClientTradeData()
     updateUserList()
     UI:open()
 end
