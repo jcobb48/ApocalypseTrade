@@ -34,7 +34,6 @@ local function getPlayerBySteamID(_id)
     print("Connected players > ", _players)
     print(type(_players))
     print(_players:size())
-    print(_players:get(0))
     for p=0, _players:size(), 1 do
         local player = _players:get(p)
         print("player > ", p, player)

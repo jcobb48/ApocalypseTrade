@@ -27,10 +27,10 @@ end
 local function getPlayerByName(_name)
     local _players = getOnlinePlayers()
     print("Connected players > ", _players)
-    for i, player in ipairs(_players) do
-        local _u = player:getUsername()
+    for p=0, _players:size(), 1 do
+        local _u = _players[p]:getUsername()
         if _u == _name then
-            return player
+            return _players[p]
         end
     end
 end
@@ -99,16 +99,19 @@ local function updateUserList()
 
         local _playerUsername = getPlayer():getUsername()
         local _playerNames = { _playerUsername }
+
         local _players = getConnectedPlayers()
+
+        print(type(_players))
         print(_players)
         if _players ~= nil then
-            local count = 0
-            for _ in ipairs(_players) do count = count + 1 end
-            print("count: ", count)
-            for i, _player in ipairs(_players) do
-                local _pusername = _player:getUsername()
-                print("user added ", _pusername)
-                _playerNames.insert(i+1, _pusername)
+            print("count: ", _players:size())
+            if _players:size() > 0 then
+                for p=0, _players:size(), 1 do
+                    local _pusername = _players:get(p):getUsername()
+                    print("user added ", _pusername)
+                    _playerNames.insert(p + 1, _pusername)
+                end
             end
         end
 
@@ -147,54 +150,6 @@ function CreateUI()
 
 end
 
-
--- Create the UI with all element exept image and image button
-function createUI2()
-    UI = NewUI();
-    UI:setTitle("All elements UI test")
-    UI:setColumnWidthPixel(1, 100);
-
-    UI:addText("", "Apocalypse Shop", "Title", "Center");
-    UI:setLineHeightPixel(100);
-    UI:nextLine();
-
-
-    UI:addText("", "ACoins:", _, "Center");
-    UI:addText("", "0", _, "Center");
-    UI:nextLine();
-
-    UI:addText("", "Rich text:", _, "Center");
-    UI:addRichText("", text1);
-    UI:nextLine();
-
-    UI:addText("", "Progress bar:", _, "Center");
-    UI:addProgressBar("pb1", 0, 0, 100);
-    UI:nextLine();
-
-
-    UI:addButton("", "", _);
-    UI:nextLine();
-
-    UI:addText("", "Tick box:", _, "Center");
-    UI:addTickBox("t1");
-    UI:nextLine();
-
-    UI:addText("", "Entry:", _, "Center");
-    UI:addEntry("e1", "");
-    UI:nextLine();
-
-    UI:addText("", "Combo:", _, "Center")
-    UI:addComboBox("c1", items1)
-    UI:nextLine()
-
-    UI:addText("", "ScrollList:", _, "Center")
-    UI:addScrollList("s1", items2)
-
-    UI:setBorderToAllElements(true)
-
-
-    UI:saveLayout()
-end
 
 function OpenUIMenu(key)
     print("key ", key)
